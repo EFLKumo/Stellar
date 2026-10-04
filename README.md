@@ -1,21 +1,31 @@
-# shadcn/ui monorepo template
+# Stellar
 
-This is a TanStack Start monorepo template with shadcn/ui.
+Stellar stores links and Markdown text as feeds.
+Users can use AI models to make summaries and translations.
+The RSS worker selects articles with each user's stored preferences.
+Users can forward feeds and add comments to public feeds.
+Only an administrator can create user accounts.
 
-## Adding components
+## Deploy
 
-To add components to your app, run the following command at the root of your `web` app:
+Install Podman, `podman-compose`, Python 3, `python-dotenv`, and curl.
+Copy the configuration file.
 
-```bash
-pnpm dlx shadcn@latest add button -c apps/web
+```sh
+cp .env.example .env
 ```
 
-This will place the ui components in the `packages/ui/src/components` directory.
+Set the AI provider keys in `.env`.
+Then start the deployment.
 
-## Using components
-
-To use the components in your app, import them from the `ui` package.
-
-```tsx
-import { Button } from "@workspace/ui/components/button";
+```sh
+./scripts/deploy.sh
 ```
+
+Open `http://localhost:8080`.
+Read the administrator name and password from `.env`.
+
+See [Deployment](docs/deployment.md) for domain names, HTTPS, backup, and restart procedures.
+See [Configuration](docs/configuration.md) for environment variables.
+See [Architecture](docs/architecture.md) for the program structure.
+See [Development](docs/development.md) for local commands.

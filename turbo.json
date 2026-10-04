@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**"]
+      "outputs": [".output/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -20,5 +20,30 @@
       "cache": false,
       "persistent": true
     }
-  }
+  },
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "STELLAR_ADMIN_EMAIL",
+    "STELLAR_ADMIN_USERNAME",
+    "STELLAR_ADMIN_PASSWORD",
+    "AI_MODELS",
+    "GOOGLE_GENERATIVE_AI_API_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "RSS_POLL_SECONDS",
+    "RSS_CONCURRENCY",
+    "TEST_APP_ORIGIN",
+    "TEST_BASE_URL",
+    "TEST_ADMIN_PASSWORD",
+    "TEST_ADMIN_USERNAME",
+    "TEST_RECIPIENT_EMAIL",
+    "TEST_DATABASE_URL",
+    "PLAYWRIGHT_BROWSERS_PATH",
+    "TEST_ADMIN_EMAIL",
+    "TEST_ADMIN_NAME",
+    "TEST_ADMIN_USER",
+    "TEST_DB_URL"
+  ]
 }

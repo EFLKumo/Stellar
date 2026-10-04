@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "typescriptteam.native-preview",
+    "effectful-tech.effect-vscode"
+  ]
+}

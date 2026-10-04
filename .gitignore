@@ -17,3 +17,9 @@ todos.json
 
 # typescript
 *.tsbuildinfo
+
+!.env.example
+
+# Browser checks
+test-results/
+playwright-report/

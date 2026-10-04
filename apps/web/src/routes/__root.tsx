@@ -1,32 +1,48 @@
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
-
+import {
+  createRootRoute,
+  HeadContent,
+  Link,
+  Scripts,
+} from "@tanstack/react-router"
+import { Button } from "@workspace/ui/components/button"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@workspace/ui/components/empty"
+import { Toaster } from "@workspace/ui/components/toast"
+import { TooltipProvider } from "@workspace/ui/components/tooltip"
 import appCss from "@workspace/ui/globals.css?url"
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Stellar · A space for good ideas" },
       {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      {
-        title: "TanStack Start Starter",
+        name: "description",
+        content:
+          "Collect, read, and share articles. Build a feed that learns what you like.",
       },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/svg+xml", href: "/stellar.svg" },
     ],
   }),
   notFoundComponent: () => (
-    <main className="container mx-auto p-4 pt-16">
-      <h1>404</h1>
-      <p>The requested page could not be found.</p>
+    <main className="flex min-h-svh items-center justify-center">
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>Page not found</EmptyTitle>
+          <EmptyDescription>This page does not exist.</EmptyDescription>
+        </EmptyHeader>
+        <Button render={<Link to="/" />} nativeButton={false}>
+          Open Stellar
+        </Button>
+      </Empty>
     </main>
   ),
   shellComponent: RootDocument,
@@ -34,12 +50,14 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
-        {children}
+        <TooltipProvider>
+          <Toaster>{children}</Toaster>
+        </TooltipProvider>
         <Scripts />
       </body>
     </html>

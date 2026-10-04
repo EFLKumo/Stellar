@@ -1,0 +1,91 @@
+name: stellar
+
+x-application: &application
+  image: localhost/stellar:latest
+  build:
+    context: .
+    dockerfile: Containerfile
+  restart: unless-stopped
+  init: true
+  env_file:
+    - .env
+  environment:
+    DATABASE_URL: postgresql://stellar:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@database:5432/stellar
+    BETTER_AUTH_URL: ${APP_ORIGIN:-http://localhost:8080}
+    NODE_ENV: production
+    HOST: 0.0.0.0
+    PORT: "3000"
+  depends_on:
+    database:
+      condition: service_healthy
+  stop_grace_period: 30s
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  database:
+    image: docker.io/library/postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stellar
+      POSTGRES_USER: stellar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U stellar -d stellar"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    stop_grace_period: 30s
+
+  app:
+    <<: *application
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health', { signal: AbortSignal.timeout(4000) }).then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  worker:
+    <<: *application
+    command: [node, --import, tsx, src/server/worker.ts]
+    healthcheck:
+      disable: true
+    depends_on:
+      database:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+
+  proxy:
+    image: docker.io/library/caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"
+      - "${HTTPS_PORT:-8443}:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro,Z
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    stop_grace_period: 10s
+
+volumes:
+  database:
+    name: stellar_database
+  caddy_data:
+    name: stellar_caddy_data
+  caddy_config:
+    name: stellar_caddy_config

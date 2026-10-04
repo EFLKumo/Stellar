@@ -5,18 +5,24 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "lint": "turbo lint",
-    "format": "turbo format",
-    "typecheck": "turbo typecheck"
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "pnpm --filter web generate-routes && tsc -p apps/web/tsconfig.json && tsc -p packages/ui/tsconfig.json",
+    "prepare": "effect-tsgo patch --typescript --no-oxlint",
+    "test": "pnpm --filter web test",
+    "test:e2e": "playwright test",
+    "deploy": "./scripts/deploy.sh"
   },
   "devDependencies": {
-    "prettier": "^3.9.9",
-    "prettier-plugin-tailwindcss": "^0.8.1",
+    "@axe-core/playwright": "^4.13.0",
+    "@biomejs/biome": "2.5.15",
+    "@effect/tsgo": "0.48.0",
+    "@playwright/test": "^1.63.0",
     "turbo": "^2.11.5",
-    "typescript": "^6.0.2"
+    "typescript": "^7.0.2"
   },
   "packageManager": "pnpm@11.25.0",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=26.0.0"
   }
 }

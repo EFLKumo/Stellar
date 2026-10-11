@@ -67,6 +67,20 @@ Provider keys remain on the server.
 Change these values to control RSS request volume.
 The worker uses each user's stored preferences to select articles.
 
+## DNS lookup
+
+The application uses the host's DNS settings for normal lookups.
+Some network proxies return addresses in `198.18.0.0/15`.
+These are called fake IP addresses.
+Article and RSS connections do not use these addresses.
+For a host with only these addresses, Stellar uses a DNS over HTTPS (DoH) resolver.
+
+The default resolver is `https://cloudflare-dns.com/dns-query`.
+Set `DNS_OVER_HTTPS_URL` to use another HTTPS DNS JSON endpoint.
+Set `DNS_OVER_HTTPS_URL=off` to disable this fallback.
+Stellar checks IPv4 and IPv6 answers and rejects private addresses.
+It uses only checked addresses for article and RSS connections.
+
 ## Direct server values
 
 Compose supplies these values to the application and worker.

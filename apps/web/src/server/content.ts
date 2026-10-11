@@ -1,7 +1,9 @@
-import { lookup } from "node:dns/promises"
+import dns from "node:dns/promises"
 import { isIP } from "node:net"
 import { Readability } from "@mozilla/readability"
-import { Effect } from "effect"
+import { RecordType } from "@multiformats/dns"
+import { dnsJsonOverHttps } from "@multiformats/dns/resolvers"
+import { Config, Effect } from "effect"
 import ipaddr from "ipaddr.js"
 import { parseHTML } from "linkedom"
 import { Agent, fetch } from "undici"
@@ -10,6 +12,7 @@ import { AppError } from "./errors"
 const MAX_BYTES = 2_000_000
 const MAX_TEXT = 60_000
 const NETWORK_TIMEOUT = 20_000
+const FAKE_IP_RANGE = ipaddr.IPv4.parseCIDR("198.18.0.0/15")
 const redirects = new Set([301, 302, 303, 307, 308])
 
 export function isPublicAddress(address: string): boolean {
@@ -51,6 +54,81 @@ export function canonicalUrl(value: string): string {
   return url.toString()
 }
 
+const resolveProxyHostname = Effect.fn("content.resolveProxyHostname")(
+  function* (hostname: string) {
+    const endpoint = yield* Config.String("DNS_OVER_HTTPS_URL").pipe(
+      Config.withDefault("https://cloudflare-dns.com/dns-query"),
+    )
+    if (endpoint === "off") return []
+    const url = yield* Effect.try({
+      try: () => {
+        const url = new URL(endpoint)
+        if (
+          url.protocol !== "https:" ||
+          url.username ||
+          url.password ||
+          url.search ||
+          url.hash
+        )
+          throw new Error(
+            "Use an HTTPS DNS endpoint without credentials or parameters.",
+          )
+        return url
+      },
+      catch: (cause) =>
+        new AppError({
+          message: "Set DNS_OVER_HTTPS_URL to a valid HTTPS DNS endpoint.",
+          status: 500,
+          cause,
+        }),
+    })
+    const resolve = dnsJsonOverHttps(url.toString())
+    const responses = yield* Effect.forEach(
+      [RecordType.A, RecordType.AAAA],
+      (type) =>
+        Effect.tryPromise({
+          try: (signal) => resolve(hostname, { types: type, signal }),
+          catch: (cause) =>
+            new AppError({
+              message: "The public DNS lookup failed. Try again.",
+              status: 502,
+              cause,
+            }),
+        }).pipe(
+          Effect.filterOrFail(
+            (response) => response.Status === 0 && !response.TC,
+            () =>
+              new AppError({
+                message: "The public DNS lookup failed. Try again.",
+                status: 502,
+              }),
+          ),
+        ),
+      { concurrency: 2 },
+    ).pipe(
+      Effect.timeout("10 seconds"),
+      Effect.mapError((cause) =>
+        cause instanceof AppError
+          ? cause
+          : new AppError({
+              message: "The public DNS lookup timed out. Try again.",
+              status: 502,
+              cause,
+            }),
+      ),
+    )
+    return responses.flatMap((response) =>
+      response.Answer.flatMap((answer) => {
+        // The resolver normalizes numeric DNS record types to their names.
+        const type = String(answer.type)
+        return ["A", "AAAA", "1", "28"].includes(type)
+          ? [{ address: answer.data, family: isIP(answer.data) }]
+          : []
+      }),
+    )
+  },
+)
+
 export const validatePublicUrl = Effect.fn("content.validatePublicUrl")(
   function* (value: string) {
     const url = yield* Effect.try({
@@ -73,11 +151,11 @@ export const validatePublicUrl = Effect.fn("content.validatePublicUrl")(
         status: 400,
       })
     }
-    const addresses = yield* Effect.tryPromise({
+    let addresses = yield* Effect.tryPromise({
       try: () =>
         isIP(hostname)
           ? Promise.resolve([{ address: hostname, family: isIP(hostname) }])
-          : lookup(hostname, { all: true, verbatim: true }),
+          : dns.lookup(hostname, { all: true, verbatim: true }),
       catch: (cause) =>
         new AppError({
           message: "The URL host could not be found.",
@@ -96,6 +174,17 @@ export const validatePublicUrl = Effect.fn("content.validatePublicUrl")(
             }),
       ),
     )
+    if (
+      !isIP(hostname) &&
+      addresses.length > 0 &&
+      addresses.every(
+        ({ address }) =>
+          isIP(address) === 4 &&
+          ipaddr.IPv4.parse(address).match(FAKE_IP_RANGE),
+      )
+    ) {
+      addresses = yield* resolveProxyHostname(hostname)
+    }
     if (
       !addresses.length ||
       addresses.some(({ address }) => !isPublicAddress(address))

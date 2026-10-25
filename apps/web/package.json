@@ -28,11 +28,11 @@
     "@mozilla/readability": "^0.6.0",
     "@multiformats/dns": "^1.0.15",
     "@tailwindcss/vite": "^4",
-    "@tanstack/react-router": "latest",
-    "@tanstack/react-start": "latest",
+    "@tanstack/react-router": "^1.170.41",
+    "@tanstack/react-start": "^1.168.60",
     "@workspace/ui": "workspace:*",
     "ai": "^7.0.127",
-    "better-auth": "^1.7.7",
+    "better-auth": "^1.7.12",
     "drizzle-orm": "^0.45.3",
     "effect": "4.0.0",
     "ipaddr.js": "^2.5.0",
@@ -44,8 +44,8 @@
     "remark-gfm": "^4.0.1",
     "rss-parser": "^3.13.0",
     "tailwindcss": "^4",
-    "undici": "^8.11.2",
-    "zod": "^4.6.5"
+    "undici": "^8.12.3",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tanstack/router-cli": "^1.167.39",
@@ -56,6 +56,6 @@
     "drizzle-kit": "^0.31.11",
     "nitro": "3.0.260903-beta",
     "tsx": "^4.23.15",
-    "vite": "^8"
+    "vite": "^8.3.5"
   }
 }

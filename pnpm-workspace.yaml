@@ -7,3 +7,8 @@ allowBuilds:
   lightningcss: true
   unrs-resolver: true
   msw: false
+
+# solid-js is an optional better-auth peer. Pin it to a release that uses a
+# patched seroval (see GHSA-p6vx-979v-rg4c / GHSA-jp82-f5mq-hwhp).
+overrides:
+  solid-js: ^1.9.17
